@@ -2,7 +2,8 @@ from django.http import HttpResponseRedirect
 from django.views.generic import ListView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.views import LoginView
+from tasks.forms import TaskForm, TaskUserCreationForm, TaskUserLoginForm
 from tasks.models import Task
 
 
@@ -25,7 +26,6 @@ def cascadeUpdate(priority, id=None):
 
 class TaskEditView(LoginRequiredMixin):
     success_url = "/tasks"
-    fields = ["title", "description", "priority", "completed"]
 
     def get_queryset(self):
         return Task.objects.filter(deleted=False, user=self.request.user)
@@ -88,10 +88,12 @@ class AllTasksView(LoginRequiredMixin, ListView):
 
 
 class AddTaskView(TaskEditView, CreateView):
+    form_class = TaskForm
     template_name = "add.html"
 
 
 class UpdateTaskView(TaskEditView, UpdateView):
+    form_class = TaskForm
     template_name = "update.html"
 
     def form_valid(self, form):
@@ -116,6 +118,10 @@ class DeleteTaskView(DeleteView):
 
 
 class UserCreateView(CreateView):
-    form_class = UserCreationForm
+    form_class = TaskUserCreationForm
     template_name = "registration/signup.html"
     success_url = "/user/login"
+
+
+class UserLoginView(LoginView):
+    form_class = TaskUserLoginForm
