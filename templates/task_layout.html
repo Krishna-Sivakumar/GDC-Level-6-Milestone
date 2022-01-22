@@ -14,7 +14,7 @@
 <ul class="overflow-scroll">
 {% for task in tasks %}
     <li class="bg-slate-100 p-4 rounded-xl flex max-w-sm my-4">
-        <p class="text-xl grow">
+        <p class="text-xl grow text-sm">
             {% if task.completed %}
             <s class="text-rose-500">{{task.title}}</s>
             {% else %}
