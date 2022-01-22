@@ -37,7 +37,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    "tasks"
+    "tasks",
+    "tailwind",
+    "theme"
 ]
 
 MIDDLEWARE = [
@@ -126,5 +128,11 @@ STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_REDIRECT_URL = "/tasks"
-LOGIN_URL="/user/login"
-LOGOUT_REDIRECT_URL="/"
+LOGIN_URL = "/user/login"
+LOGOUT_REDIRECT_URL = "/"
+
+INTERNAL_IPS = [
+    "127.0.0.1",
+]
+
+TAILWIND_APP_NAME = "theme"

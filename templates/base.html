@@ -1,0 +1,10 @@
+{% load static tailwind_tags %}
+<html>
+    <head>
+        <title>Task Manager</title>
+		{% tailwind_css %}
+    </head>
+    <body class="bg-white m-5 max-w-sm max-h-screen flex flex-col align-center">
+        {% block content %}{% endblock content %}
+    </body>
+</html>
