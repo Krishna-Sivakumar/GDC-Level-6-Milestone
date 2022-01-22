@@ -1,5 +1,15 @@
 ## Final Results:
 
+#### Setting up the development environment:
+
+```shell
+virtualenv .env
+source .env/bin/activate
+python3 -m pip install -r requirements.txt
+python3 manage.py tailwind install
+python3 manage.py migrate
+```
+
 #### To start the development server:
 
 ```shell
