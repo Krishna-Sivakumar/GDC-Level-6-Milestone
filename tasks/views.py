@@ -89,12 +89,12 @@ class AllTasksView(LoginRequiredMixin, ListView):
 
 class AddTaskView(TaskEditView, CreateView):
     form_class = TaskForm
-    template_name = "add.html"
+    template_name = "forms/add.html"
 
 
 class UpdateTaskView(TaskEditView, UpdateView):
     form_class = TaskForm
-    template_name = "update.html"
+    template_name = "forms/update.html"
 
     def form_valid(self, form):
         incoming_priority = form.cleaned_data.get("priority")
@@ -107,7 +107,7 @@ class UpdateTaskView(TaskEditView, UpdateView):
 
 
 class DeleteTaskView(DeleteView):
-    template_name = "delete.html"
+    template_name = "forms/delete.html"
     success_url = "/tasks"
     queryset = Task.objects.filter(deleted=False)
 

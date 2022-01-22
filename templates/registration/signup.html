@@ -5,11 +5,19 @@
 
 <form action="" method="post" class="flex flex-col my-4">
     {% csrf_token %}
-    {% for field in form %}
-        {{field.errors}}
-        {{field.label_tag}}
+    {% for field in form.visible_fields %}
+        <div class="text-rose-600">
+            {{field.errors}}
+        </div>
+        <label for="{{ field.id_for_label }}">
+            {{ field.label }}
+        </label>
         {{field}}
-        {% if field.help_text %} <p class="text-slate-500 text-xs">{{ field.help_text|safe }}</p> {% endif %}
+        {% if field.help_text %}
+        <div class="text-slate-500 text-xs list-disc">
+            {{ field.help_text|safe }}
+        </div> 
+        {% endif %}
         <br>
     {% endfor %}
     <input class="p-4 bg-red-500 text-white rounded-xl text-center" type="submit" value="Signup">
