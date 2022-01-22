@@ -12,17 +12,29 @@ python3 manage.py tailwind start
 ##### Signup
 
 <img src="screenshots/s1.png" width="800px">
+
 ##### Login
+
 <img src="screenshots/s2.png" width="800px">
+
 ##### Viewing all tasks
+
 <img src="screenshots/s3.png" width="800px">
+
 ##### Creating a task
+
 <img src="screenshots/s4.png" width="800px">
+
 ##### Existing priorities have been shifted
+
 <img src="screenshots/s5.png" width="800px">
+
 ##### Marking a task out
+
 <img src="screenshots/s6.png" width="800px">
+
 ##### Viewing final screen
+
 <img src="screenshots/s7.png" width="800px">
 
 In This milestone, you will be extending the functionality of the project we
