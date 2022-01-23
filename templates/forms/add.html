@@ -1,17 +1,8 @@
-{% extends "base.html" %}
-{% block content %}
-<p class="text-4xl font-bold capitalize">Add Todo</p>
-<form action="" method="post" class="flex flex-col my-4">
-    {% csrf_token %}
-    {% for field in form %}
-        {{field.errors}}
-        {{field.label_tag}}
-        {{field}}
-        {% if field.help_text %}
-        <p class="help">{{ field.help_text|safe }}</p>
-        {% endif %}
-        <br>
-    {% endfor %}
-    <input class="p-4 bg-red-500 text-white rounded-xl text-center" type="submit" value="Add">
-</form>
-{% endblock content %}
+{% extends "baseform.html" %}
+{% block title %}
+Add Todo
+{% endblock title %}
+
+{% block submit %}
+Add
+{% endblock submit %}
