@@ -1,15 +1,18 @@
-from django.http import HttpResponseRedirect
-from django.views.generic import ListView
-from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.views import LoginView
+from django.db import transaction
+from django.http import HttpResponseRedirect
+from django.views.generic import ListView
+from django.views.generic.edit import CreateView, DeleteView, UpdateView
+
 from tasks.forms import TaskForm, TaskUserCreationForm, TaskUserLoginForm
 from tasks.models import Task
 
 
+@transaction.atomic
 def cascadeUpdate(priority, id=None):
     if Task.objects.filter(priority=priority).count() > 0:
-        temp_tasks = Task.objects.filter(
+        temp_tasks = Task.objects.select_for_update().filter(
             priority__gte=priority, deleted=False, completed=False).order_by("priority")
 
         if id is not None and temp_tasks[0].id == id:
