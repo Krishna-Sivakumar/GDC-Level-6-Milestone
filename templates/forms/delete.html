@@ -6,6 +6,6 @@
 <form action="" method="post" class="flex flex-col my-4">
     {% csrf_token %}
     <p class="my-4">Are you sure you want to delete "{{object}}"?</p>
-    <input class="p-4 bg-red-500 text-white rounded-xl text-center" type="submit" value="Delete">
+    <input class="block drop-shadow-md p-4 bg-gradient-to-r from-rose-400 to-rose-600 rounded-xl text-center text-white active:drop-shadow-none active:brightness-110 transition text-lg font-bold cursor-pointer" type="submit" value="Signup">
 </form>
 {% endblock content %}
