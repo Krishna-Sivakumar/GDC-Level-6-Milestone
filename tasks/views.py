@@ -23,8 +23,9 @@ def cascadeUpdate(priority, id=None):
             if counter != task.priority:
                 break
             task.priority += 1
-            task.save()
             counter += 1
+
+        Task.objects.bulk_update(temp_tasks, ["priority"])
 
 
 class TaskEditView(LoginRequiredMixin):
