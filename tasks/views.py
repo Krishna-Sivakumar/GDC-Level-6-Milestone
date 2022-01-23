@@ -1,7 +1,7 @@
 from django.http import HttpResponseRedirect
 from django.views.generic import ListView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.views import LoginView
 from tasks.forms import TaskForm, TaskUserCreationForm, TaskUserLoginForm
 from tasks.models import Task
@@ -117,10 +117,16 @@ class DeleteTaskView(DeleteView):
         return HttpResponseRedirect(self.get_success_url())
 
 
-class UserCreateView(CreateView):
+class UserCreateView(UserPassesTestMixin, CreateView):
     form_class = TaskUserCreationForm
     template_name = "registration/signup.html"
     success_url = "/user/login"
+
+    def test_func(self):
+        return self.request.user.is_anonymous
+
+    def handle_no_permission(self):
+        return HttpResponseRedirect("/tasks/")
 
 
 class UserLoginView(LoginView):
