@@ -11,7 +11,7 @@ from tasks.models import Task
 
 @transaction.atomic
 def cascadeUpdate(priority, id=None):
-    if Task.objects.filter(priority=priority).count() > 0:
+    if Task.objects.filter(priority=priority).exists():
         temp_tasks = Task.objects.select_for_update().filter(
             priority__gte=priority, deleted=False, completed=False).order_by("priority")
 
