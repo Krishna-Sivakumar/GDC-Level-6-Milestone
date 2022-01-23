@@ -10,12 +10,12 @@ from tasks.models import Task
 
 
 @transaction.atomic
-def cascadeUpdate(priority, id=None):
-    if Task.objects.filter(priority=priority).exists():
+def cascadeUpdate(priority, user, task=None):
+    if Task.objects.filter(priority=priority, deleted=False, completed=False, user=user).exists():
         temp_tasks = Task.objects.select_for_update().filter(
-            priority__gte=priority, deleted=False, completed=False).order_by("priority")
+            priority__gte=priority, deleted=False, completed=False, user=user).order_by("priority")
 
-        if id is not None and temp_tasks[0].id == id:
+        if id is not None and temp_tasks[0] == task:
             return
 
         counter = priority
@@ -36,7 +36,7 @@ class TaskEditView(LoginRequiredMixin):
 
     def form_valid(self, form):
         incoming_priority = form.cleaned_data.get("priority")
-        cascadeUpdate(incoming_priority)
+        cascadeUpdate(incoming_priority, self.request.user)
         self.object = form.save()
         self.object.user = self.request.user
         self.object.save()
@@ -103,7 +103,8 @@ class UpdateTaskView(TaskEditView, UpdateView):
     def form_valid(self, form):
         incoming_priority = form.cleaned_data.get("priority")
         # id is passed so as to avoid cascading if the task's priority has not changed
-        cascadeUpdate(incoming_priority, self.get_object().id)
+        cascadeUpdate(incoming_priority, self.request.user,
+                      self.get_object())
         self.object = form.save()
         self.object.user = self.request.user
         self.object.save()
