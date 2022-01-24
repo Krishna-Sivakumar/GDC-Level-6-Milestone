@@ -17,4 +17,4 @@ class Task(models.Model):
     priority = models.IntegerField(null=False)
 
     def __str__(self):
-        return self.title
+        return f"{self.title}: {self.priority} | {self.user}"
