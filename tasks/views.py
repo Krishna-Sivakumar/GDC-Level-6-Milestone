@@ -15,17 +15,17 @@ def cascadeUpdate(priority, user, task=None):
         temp_tasks = Task.objects.select_for_update().filter(
             priority__gte=priority, deleted=False, completed=False, user=user).order_by("priority")
 
-        if id is not None and temp_tasks[0] == task:
-            return
+        to_be_changed = []
 
         counter = priority
         for task in temp_tasks:
             if counter != task.priority:
                 break
             task.priority += 1
+            to_be_changed.append(task)
             counter += 1
 
-        Task.objects.bulk_update(temp_tasks, ["priority"])
+        Task.objects.bulk_update(to_be_changed, ["priority"])
 
 
 class TaskEditView(LoginRequiredMixin):
@@ -102,9 +102,8 @@ class UpdateTaskView(TaskEditView, UpdateView):
 
     def form_valid(self, form):
         incoming_priority = form.cleaned_data.get("priority")
-        # id is passed so as to avoid cascading if the task's priority has not changed
-        cascadeUpdate(incoming_priority, self.request.user,
-                      self.get_object())
+        if incoming_priority != Task.objects.get(id=self.object.id).priority:
+            cascadeUpdate(incoming_priority, self.request.user)
         self.object = form.save()
         self.object.user = self.request.user
         self.object.save()
