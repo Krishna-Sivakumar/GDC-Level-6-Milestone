@@ -4,4 +4,9 @@ from django.contrib import admin
 
 from tasks.models import Task
 
-admin.sites.site.register(Task)
+
+class TaskAdmin(admin.ModelAdmin):
+    list_display = ("id", "priority", "title", "completed", "deleted", "user")
+
+
+admin.sites.site.register(Task, TaskAdmin)
