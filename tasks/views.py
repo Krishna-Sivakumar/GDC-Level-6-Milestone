@@ -1,9 +1,12 @@
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.models import User
 from django.contrib.auth.views import LoginView
 from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.views.generic import ListView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
+from rest_framework.serializers import ModelSerializer
+from rest_framework.viewsets import ModelViewSet
 
 from tasks.forms import TaskForm, TaskUserCreationForm, TaskUserLoginForm
 from tasks.models import Task
@@ -135,3 +138,28 @@ class UserCreateView(UserPassesTestMixin, CreateView):
 
 class UserLoginView(LoginView):
     form_class = TaskUserLoginForm
+
+
+# API Section
+
+
+class UserSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["username"]
+
+
+class TaskSerializer(ModelSerializer):
+    user = UserSerializer(read_only=True)
+
+    class Meta:
+        model = Task
+        fields = "__all__"
+
+
+class TaskApiViewset(ModelViewSet):
+    serializer_class = TaskSerializer
+    queryset = Task.objects.filter(deleted=False)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

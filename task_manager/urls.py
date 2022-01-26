@@ -14,10 +14,15 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
-from tasks.views import AddTaskView, CurrentTasksView, UpdateTaskView, DeleteTaskView, CompletedTasksView, AllTasksView, UserCreateView, UserLoginView
 from django.contrib.auth.views import LogoutView
+from django.urls import path
+from rest_framework.routers import SimpleRouter
+from tasks.views import (AddTaskView, AllTasksView, CompletedTasksView,
+                         CurrentTasksView, DeleteTaskView, TaskApiViewset,
+                         UpdateTaskView, UserCreateView, UserLoginView)
 
+router = SimpleRouter()
+router.register("api", TaskApiViewset)
 
 urlpatterns = [
     path("", CurrentTasksView.as_view()),
@@ -30,5 +35,5 @@ urlpatterns = [
     path("delete-task/<pk>/", DeleteTaskView.as_view()),
     path("user/login/", UserLoginView.as_view(redirect_authenticated_user=True)),
     path("user/signup/", UserCreateView.as_view()),
-    path("user/logout/", LogoutView.as_view())
-]
+    path("user/logout/", LogoutView.as_view()),
+] + router.urls
