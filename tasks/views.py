@@ -7,6 +7,7 @@ from django.views.generic import ListView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from rest_framework.serializers import ModelSerializer
 from rest_framework.viewsets import ModelViewSet
+from rest_framework.permissions import IsAuthenticated
 
 from tasks.forms import TaskForm, TaskUserCreationForm, TaskUserLoginForm
 from tasks.models import Task
@@ -158,8 +159,9 @@ class TaskSerializer(ModelSerializer):
 
 
 class TaskApiViewset(ModelViewSet):
-    serializer_class = TaskSerializer
+    permission_classes = [IsAuthenticated]
     queryset = Task.objects.filter(deleted=False)
+    serializer_class = TaskSerializer
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
