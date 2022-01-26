@@ -5,12 +5,14 @@ from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.views.generic import ListView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
+from django_filters.rest_framework import (CharFilter, ChoiceFilter,
+                                           DjangoFilterBackend, FilterSet, BooleanFilter)
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.serializers import ModelSerializer
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.permissions import IsAuthenticated
 
 from tasks.forms import TaskForm, TaskUserCreationForm, TaskUserLoginForm
-from tasks.models import Task
+from tasks.models import STATUS_CHOICES, Task
 
 
 @transaction.atomic
@@ -158,10 +160,19 @@ class TaskSerializer(ModelSerializer):
         fields = "__all__"
 
 
+class TaskFilter(FilterSet):
+    title = CharFilter(lookup_expr="icontains")
+    status = ChoiceFilter(choices=STATUS_CHOICES)
+    completed = BooleanFilter()
+
+
 class TaskApiViewset(ModelViewSet):
     permission_classes = [IsAuthenticated]
     queryset = Task.objects.filter(deleted=False)
     serializer_class = TaskSerializer
+
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = TaskFilter
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)

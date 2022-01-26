@@ -6,7 +6,7 @@ from tasks.models import Task
 class TaskForm(ModelForm):
     class Meta:
         model = Task
-        fields = ["title", "description", "priority", "completed"]
+        fields = ["title", "description", "status", "priority", "completed"]
 
     def __init__(self, *args, **kwargs):
         super(TaskForm, self).__init__(*args, **kwargs)
