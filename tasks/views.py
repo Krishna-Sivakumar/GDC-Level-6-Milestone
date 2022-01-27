@@ -188,3 +188,25 @@ class TaskApiViewset(ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+
+class TaskHistorySerializer(ModelSerializer):
+    class Meta:
+        model = TaskHistory
+        fields = "__all__"
+
+
+class TaskHistoryFilter(FilterSet):
+    task = ModelChoiceFilter(queryset=Task.objects.filter(deleted=False))
+    timestamp = DateFromToRangeFilter()
+    from_status = ChoiceFilter(choices=STATUS_CHOICES)
+    to_status = ChoiceFilter(choices=STATUS_CHOICES)
+
+
+class TaskHistoryApiViewset(ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    serializer_class = TaskHistorySerializer
+    queryset = TaskHistory.objects.all()
+
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = TaskHistoryFilter
