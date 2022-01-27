@@ -28,3 +28,14 @@ class Task(models.Model):
 
     def __str__(self):
         return f"{self.title}: {self.priority} | {self.user}"
+
+
+class TaskHistory(models.Model):
+    task = models.ForeignKey(
+        Task,
+        on_delete=models.CASCADE,
+    )
+    from_status = models.CharField(
+        max_length=100, choices=STATUS_CHOICES, null=True)
+    to_status = models.CharField(max_length=100, choices=STATUS_CHOICES)
+    timestamp = models.DateTimeField(auto_now=True)
