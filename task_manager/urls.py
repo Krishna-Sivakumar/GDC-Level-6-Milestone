@@ -18,11 +18,12 @@ from django.contrib.auth.views import LogoutView
 from django.urls import path
 from rest_framework.routers import SimpleRouter
 from tasks.views import (AddTaskView, AllTasksView, CompletedTasksView,
-                         CurrentTasksView, DeleteTaskView, TaskApiViewset,
+                         CurrentTasksView, DeleteTaskView, TaskApiViewset, TaskHistoryApiViewset,
                          UpdateTaskView, UserCreateView, UserLoginView)
 
 router = SimpleRouter()
-router.register("api", TaskApiViewset)
+router.register("api/task", TaskApiViewset)
+router.register("api/history", TaskHistoryApiViewset)
 
 urlpatterns = [
     path("", CurrentTasksView.as_view()),
