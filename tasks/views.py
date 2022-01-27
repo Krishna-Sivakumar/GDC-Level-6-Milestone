@@ -5,14 +5,16 @@ from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.views.generic import ListView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
-from django_filters.rest_framework import (CharFilter, ChoiceFilter,
-                                           DjangoFilterBackend, FilterSet, BooleanFilter)
+from django_filters.rest_framework import (BooleanFilter, CharFilter,
+                                           ChoiceFilter, DateFromToRangeFilter,
+                                           DjangoFilterBackend, FilterSet,
+                                           ModelChoiceFilter)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.serializers import ModelSerializer
 from rest_framework.viewsets import ModelViewSet
 
 from tasks.forms import TaskForm, TaskUserCreationForm, TaskUserLoginForm
-from tasks.models import STATUS_CHOICES, Task
+from tasks.models import STATUS_CHOICES, Task, TaskHistory
 
 
 @transaction.atomic
@@ -42,10 +44,15 @@ class TaskEditView(LoginRequiredMixin):
 
     def form_valid(self, form):
         incoming_priority = form.cleaned_data.get("priority")
+        incoming_status = form.cleaned_data.get("status")
         cascadeUpdate(incoming_priority, self.request.user)
         self.object = form.save()
         self.object.user = self.request.user
         self.object.save()
+
+        current_task = Task.objects.get(id=self.object.id)
+        TaskHistory.objects.create(
+            to_status=incoming_status, task=current_task)
         return HttpResponseRedirect(self.get_success_url())
 
 
@@ -108,8 +115,13 @@ class UpdateTaskView(TaskEditView, UpdateView):
 
     def form_valid(self, form):
         incoming_priority = form.cleaned_data.get("priority")
-        if incoming_priority != Task.objects.get(id=self.object.id).priority:
+        incoming_status = form.cleaned_data.get("status")
+        current_task = Task.objects.get(id=self.object.id)
+        if incoming_priority != current_task.priority:
             cascadeUpdate(incoming_priority, self.request.user)
+        if incoming_status != current_task.status:
+            TaskHistory.objects.create(
+                from_status=current_task.status, to_status=incoming_status, task=current_task)
         self.object = form.save()
         self.object.user = self.request.user
         self.object.save()
