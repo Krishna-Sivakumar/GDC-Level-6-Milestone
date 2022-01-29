@@ -2,7 +2,10 @@
 {% block content %}
 <header class="flex justify-between">
     <h1 class="text-4xl font-bold capitalize" style="text-shadow: 0 0 3px rgba(0,0,0,0.4);">Hi {{user}}</h1>
-    <a class="text-red-500" href="/user/logout/">Logout</a>
+    <div class="flex flex-col items-end">
+        <a class="text-red-500" href="/user/logout/">Logout</a>
+        <a class="text-red-500" href="/user/report/{{report_id}}">Schedule Report</a>
+    </div>
 </header>
 
 {% if total_count > 0 %}

@@ -1,6 +1,6 @@
 from django.forms import ModelForm
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from tasks.models import Task
+from tasks.models import Task, Report
 
 
 class TaskForm(ModelForm):
@@ -27,5 +27,18 @@ class TaskUserLoginForm(AuthenticationForm):
     def __init__(self, *args, **kwargs):
         super(TaskUserLoginForm, self).__init__(*args, **kwargs)
         for visible in self.visible_fields():
+            visible.field.widget.attrs["class"] = "bg-slate-100 rounded"
+            visible.field.widget.attrs["style"] = "border-color: transparent"
+
+
+class ScheduleReportForm(ModelForm):
+    class Meta:
+        model = Report
+        fields = ["time"]
+
+    def __init__(self, *args, **kwargs):
+        super(ScheduleReportForm, self).__init__(*args, **kwargs)
+        for visible in self.visible_fields():
+            visible.field.widget.input_type = "time"
             visible.field.widget.attrs["class"] = "bg-slate-100 rounded"
             visible.field.widget.attrs["style"] = "border-color: transparent"

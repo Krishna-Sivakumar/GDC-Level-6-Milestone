@@ -13,8 +13,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.serializers import ModelSerializer
 from rest_framework.viewsets import ModelViewSet
 
-from tasks.forms import TaskForm, TaskUserCreationForm, TaskUserLoginForm
-from tasks.models import STATUS_CHOICES, Task, TaskHistory
+from tasks.forms import TaskForm, TaskUserCreationForm, TaskUserLoginForm, ScheduleReportForm
+from tasks.models import STATUS_CHOICES, Report, Task, TaskHistory
 
 
 @transaction.atomic
@@ -64,7 +64,8 @@ class CurrentTasksView(LoginRequiredMixin, ListView):
         context = super(CurrentTasksView, self).get_context_data(**kwargs)
         context.update({
             "total_count": Task.objects.filter(deleted=False, user=self.request.user).count(),
-            "completed_count": Task.objects.filter(deleted=False, completed=True, user=self.request.user).count()
+            "completed_count": Task.objects.filter(deleted=False, completed=True, user=self.request.user).count(),
+            "report_id": Report.objects.filter(user=self.request.user)[0].id,
         })
         return context
 
@@ -80,7 +81,8 @@ class CompletedTasksView(LoginRequiredMixin, ListView):
         context = super(CompletedTasksView, self).get_context_data(**kwargs)
         context.update({
             "total_count": Task.objects.filter(deleted=False, user=self.request.user).count(),
-            "completed_count": Task.objects.filter(deleted=False, completed=True, user=self.request.user).count()
+            "completed_count": Task.objects.filter(deleted=False, completed=True, user=self.request.user).count(),
+            "report_id": Report.objects.filter(user=self.request.user)[0].id,
         })
         return context
 
@@ -96,7 +98,8 @@ class AllTasksView(LoginRequiredMixin, ListView):
         context = super(AllTasksView, self).get_context_data(**kwargs)
         context.update({
             "total_count": Task.objects.filter(deleted=False, user=self.request.user).count(),
-            "completed_count": Task.objects.filter(deleted=False, completed=True, user=self.request.user).count()
+            "completed_count": Task.objects.filter(deleted=False, completed=True, user=self.request.user).count(),
+            "report_id": Report.objects.filter(user=self.request.user)[0].id,
         })
         return context
 
@@ -139,10 +142,23 @@ class DeleteTaskView(DeleteView):
         return HttpResponseRedirect(self.get_success_url())
 
 
+class ScheduleReportView(LoginRequiredMixin, UpdateView):
+    form_class = ScheduleReportForm
+    success_url = "/tasks"
+    template_name = "forms/update.html"
+
+    queryset = Report.objects.all()
+
+
 class UserCreateView(UserPassesTestMixin, CreateView):
     form_class = TaskUserCreationForm
     template_name = "registration/signup.html"
     success_url = "/user/login"
+
+    def form_valid(self, form):
+        self.object = form.save()
+        Report.objects.create(user=self.object)
+        return HttpResponseRedirect(self.get_success_url())
 
     def test_func(self):
         return self.request.user.is_anonymous

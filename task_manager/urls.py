@@ -17,7 +17,7 @@ from django.contrib import admin
 from django.contrib.auth.views import LogoutView
 from django.urls import path
 from rest_framework.routers import SimpleRouter
-from tasks.views import (AddTaskView, AllTasksView, CompletedTasksView,
+from tasks.views import (AddTaskView, AllTasksView, CompletedTasksView, ScheduleReportView,
                          CurrentTasksView, DeleteTaskView, TaskApiViewset, TaskHistoryApiViewset,
                          UpdateTaskView, UserCreateView, UserLoginView)
 
@@ -37,4 +37,5 @@ urlpatterns = [
     path("user/login/", UserLoginView.as_view(redirect_authenticated_user=True)),
     path("user/signup/", UserCreateView.as_view()),
     path("user/logout/", LogoutView.as_view()),
+    path("user/report/<pk>/", ScheduleReportView.as_view()),
 ] + router.urls

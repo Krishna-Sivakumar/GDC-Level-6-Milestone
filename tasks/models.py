@@ -39,3 +39,8 @@ class TaskHistory(models.Model):
         max_length=100, choices=STATUS_CHOICES, null=True)
     to_status = models.CharField(max_length=100, choices=STATUS_CHOICES)
     timestamp = models.DateTimeField(auto_now=True)
+
+
+class Report(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    time = models.TimeField(null=True)
