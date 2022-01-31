@@ -206,7 +206,12 @@ class TaskHistoryFilter(FilterSet):
 class TaskHistoryApiViewset(ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = TaskHistorySerializer
-    queryset = TaskHistory.objects.all()
 
     filter_backends = [DjangoFilterBackend]
     filterset_class = TaskHistoryFilter
+
+    def get_queryset(self):
+        if "task_pk" in self.kwargs:
+            return TaskHistory.objects.filter(task=self.kwargs["task_pk"])
+        print("pk" in self.kwargs)
+        return TaskHistory.objects.all()

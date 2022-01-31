@@ -16,14 +16,19 @@ Including another URLconf
 from django.contrib import admin
 from django.contrib.auth.views import LogoutView
 from django.urls import path
-from rest_framework.routers import SimpleRouter
+from rest_framework_nested import routers
 from tasks.views import (AddTaskView, AllTasksView, CompletedTasksView,
                          CurrentTasksView, DeleteTaskView, TaskApiViewset, TaskHistoryApiViewset,
                          UpdateTaskView, UserCreateView, UserLoginView)
 
-router = SimpleRouter()
+router = routers.SimpleRouter()
 router.register("api/task", TaskApiViewset)
-router.register("api/history", TaskHistoryApiViewset)
+router.register("api/history", TaskHistoryApiViewset, basename="history")
+
+nested_history_router = routers.NestedSimpleRouter(
+    router, "api/task", lookup="task")
+nested_history_router.register(
+    "history", TaskHistoryApiViewset, basename="task-history")
 
 urlpatterns = [
     path("", CurrentTasksView.as_view()),
@@ -37,4 +42,4 @@ urlpatterns = [
     path("user/login/", UserLoginView.as_view(redirect_authenticated_user=True)),
     path("user/signup/", UserCreateView.as_view()),
     path("user/logout/", LogoutView.as_view()),
-] + router.urls
+] + router.urls + nested_history_router.urls
