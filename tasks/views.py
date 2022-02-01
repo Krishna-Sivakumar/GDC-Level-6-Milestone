@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
 from django.contrib.auth.views import LoginView
@@ -13,7 +15,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.serializers import ModelSerializer
 from rest_framework.viewsets import ModelViewSet
 
-from tasks.forms import TaskForm, TaskUserCreationForm, TaskUserLoginForm, ScheduleReportForm
+from tasks.forms import (ScheduleReportForm, TaskForm, TaskUserCreationForm,
+                         TaskUserLoginForm)
 from tasks.models import STATUS_CHOICES, Report, Task, TaskHistory
 
 
@@ -148,6 +151,16 @@ class ScheduleReportView(LoginRequiredMixin, UpdateView):
     template_name = "forms/update.html"
 
     queryset = Report.objects.all()
+
+    def form_valid(self, form):
+        self.object = form.save()
+        self.object.last_updated = datetime.today().replace(
+            hour=self.object.time.hour,
+            minute=self.object.time.minute,
+            second=0
+        )
+        self.object.save()
+        return HttpResponseRedirect(self.get_success_url())
 
 
 class UserCreateView(UserPassesTestMixin, CreateView):
