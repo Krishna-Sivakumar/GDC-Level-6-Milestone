@@ -1,0 +1,5 @@
+Hello {{name}}! 
+This is your daily status report: {% for key, value in status.items %}
+✺ {{key}}: {{value}} task(s){% endfor %}
+
+Get more things done tomorrow!
