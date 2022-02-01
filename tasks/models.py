@@ -44,3 +44,4 @@ class TaskHistory(models.Model):
 class Report(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     time = models.TimeField(null=True)
+    last_updated = models.DateTimeField(null=True)
