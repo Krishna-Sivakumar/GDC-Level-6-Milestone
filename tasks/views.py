@@ -154,6 +154,7 @@ class ScheduleReportView(LoginRequiredMixin, UpdateView):
 
     def form_valid(self, form):
         self.object = form.save()
+        # last_updated is set to the same day so that the next report is sent the following day
         self.object.last_updated = datetime.today().replace(
             hour=self.object.time.hour,
             minute=self.object.time.minute,

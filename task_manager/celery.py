@@ -26,21 +26,21 @@ def batch_email():
     from datetime import timedelta, datetime, timezone
 
     def user_summary(user):
-        def ad(prev, task):
-            prev[task.status] += 1
-            return prev
+        def status_reducer(acc, task):
+            acc[task.status] += 1
+            return acc
 
         tasks = Task.objects.filter(user=user, completed=False, deleted=False)
         return {
             "name": user.username.capitalize(),
             "status": dict(
-                reduce(ad, tasks, defaultdict(int))
+                reduce(status_reducer, tasks, defaultdict(int))
             )
         }
 
     start = datetime.now(timezone.utc) - timedelta(days=1)
 
-    for report in Report.objects.filter(Q(last_updated=None) | Q(last_updated__lt=start)):
+    for report in Report.objects.filter(Q(last_updated=None) | Q(last_updated__lte=start)):
         send_mail(
             "Daily Status Report",
             render_to_string("report.txt", user_summary(report.user)),
