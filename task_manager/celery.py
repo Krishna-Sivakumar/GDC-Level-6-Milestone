@@ -40,7 +40,7 @@ def batch_email():
 
     start = datetime.now(timezone.utc) - timedelta(days=1)
 
-    for report in Report.objects.filter(Q(last_updated=None) | Q(last_updated__lte=start)):
+    for report in Report.objects.filter((Q(last_updated=None) | Q(last_updated__lte=start)) & Q(disabled=False)):
         send_mail(
             "Daily Status Report",
             render_to_string("report.txt", user_summary(report.user)),

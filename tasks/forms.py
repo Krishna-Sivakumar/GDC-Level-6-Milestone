@@ -1,6 +1,8 @@
+from django import forms
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.forms import ModelForm
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from tasks.models import Task, Report
+
+from tasks.models import Report, Task
 
 
 class TaskForm(ModelForm):
@@ -32,13 +34,26 @@ class TaskUserLoginForm(AuthenticationForm):
 
 
 class ScheduleReportForm(ModelForm):
+
+    time = forms.TimeField(
+        widget=forms.TimeInput(
+            attrs={"type": "time"}
+        ),
+        required=True
+    )
+
+    disabled = forms.BooleanField(
+        widget=forms.CheckboxInput(),
+        label="Disable daily reports",
+        required=False
+    )
+
     class Meta:
         model = Report
-        fields = ["time"]
+        fields = ["time", "disabled"]
 
     def __init__(self, *args, **kwargs):
-        super(ScheduleReportForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         for visible in self.visible_fields():
-            visible.field.widget.input_type = "time"
             visible.field.widget.attrs["class"] = "bg-slate-100 rounded"
             visible.field.widget.attrs["style"] = "border-color: transparent"

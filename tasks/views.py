@@ -148,7 +148,7 @@ class DeleteTaskView(DeleteView):
 class ScheduleReportView(LoginRequiredMixin, UpdateView):
     form_class = ScheduleReportForm
     success_url = "/tasks"
-    template_name = "forms/update.html"
+    template_name = "forms/report.html"
 
     queryset = Report.objects.all()
 
