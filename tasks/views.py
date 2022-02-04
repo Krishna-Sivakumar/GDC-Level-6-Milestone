@@ -11,7 +11,8 @@ from django_filters.rest_framework import (BooleanFilter, CharFilter,
                                            ModelChoiceFilter)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.serializers import ModelSerializer
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import ModelViewSet, GenericViewSet
+from rest_framework import mixins
 
 from tasks.forms import TaskForm, TaskUserCreationForm, TaskUserLoginForm
 from tasks.models import STATUS_CHOICES, Task, TaskHistory
@@ -186,8 +187,21 @@ class TaskApiViewset(ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_class = TaskFilter
 
+    def get_queryset(self):
+        return Task.objects.filter(deleted=False, user=self.request.user)
+
+    def perform_update(self, serializer):
+        from_status, to_status = self.get_object(
+        ).status, serializer.validated_data["status"]
+        serializer.save()
+        if from_status != to_status:
+            TaskHistory.objects.create(
+                from_status=from_status, to_status=to_status, task=self.get_object())
+
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        self.object = serializer.save(user=self.request.user)
+        status = self.object.status
+        TaskHistory.objects.create(to_status=status, task=self.object)
 
 
 class TaskHistorySerializer(ModelSerializer):
@@ -203,7 +217,10 @@ class TaskHistoryFilter(FilterSet):
     to_status = ChoiceFilter(choices=STATUS_CHOICES)
 
 
-class TaskHistoryApiViewset(ModelViewSet):
+class TaskHistoryApiViewset(mixins.DestroyModelMixin,
+                            mixins.RetrieveModelMixin,
+                            mixins.ListModelMixin,
+                            GenericViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = TaskHistorySerializer
 
@@ -212,6 +229,5 @@ class TaskHistoryApiViewset(ModelViewSet):
 
     def get_queryset(self):
         if "task_pk" in self.kwargs:
-            return TaskHistory.objects.filter(task=self.kwargs["task_pk"])
-        print("pk" in self.kwargs)
-        return TaskHistory.objects.all()
+            return TaskHistory.objects.filter(task=self.kwargs["task_pk"], user=self.request.user)
+        return TaskHistory.objects.filter(task__user=self.request.user)
