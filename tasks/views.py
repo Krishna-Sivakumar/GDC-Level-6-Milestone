@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
@@ -154,12 +154,22 @@ class ScheduleReportView(LoginRequiredMixin, UpdateView):
 
     def form_valid(self, form):
         self.object = form.save()
+
         # last_updated is set to the same day so that the next report is sent the following day
-        self.object.last_updated = datetime.today().replace(
+
+        target = datetime.now().replace(hour=self.object.time.hour,
+                                        minute=self.object.time.minute, second=0).time()
+
+        self.object.last_updated = datetime.now(timezone.utc).replace(
             hour=self.object.time.hour,
             minute=self.object.time.minute,
             second=0
+        ) - (
+            # last_updated is set to the day before if the current time hasn't passed the report time
+            timedelta(days=1) if target >= datetime.now().time()
+            else timedelta(days=0)
         )
+
         self.object.save()
         return HttpResponseRedirect(self.get_success_url())
 
