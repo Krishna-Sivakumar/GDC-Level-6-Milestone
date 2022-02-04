@@ -229,5 +229,5 @@ class TaskHistoryApiViewset(mixins.DestroyModelMixin,
 
     def get_queryset(self):
         if "task_pk" in self.kwargs:
-            return TaskHistory.objects.filter(task=self.kwargs["task_pk"], user=self.request.user)
+            return TaskHistory.objects.filter(task=self.kwargs["task_pk"], task__user=self.request.user)
         return TaskHistory.objects.filter(task__user=self.request.user)
