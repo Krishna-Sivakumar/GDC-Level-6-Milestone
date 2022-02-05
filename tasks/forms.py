@@ -39,7 +39,8 @@ class ScheduleReportForm(ModelForm):
         widget=forms.TimeInput(
             attrs={"type": "time"}
         ),
-        required=True
+        required=True,
+        help_text="<small><em>Use UTC time</em></small>"
     )
 
     disabled = forms.BooleanField(
