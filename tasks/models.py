@@ -1,6 +1,9 @@
 from django.contrib.auth.models import User
 from django.db import models
 
+from django.dispatch import receiver
+from django.db.models.signals import post_save, pre_save
+
 
 STATUS_CHOICES = (
     ("PENDING", "PENDING"),
@@ -39,3 +42,18 @@ class TaskHistory(models.Model):
         max_length=100, choices=STATUS_CHOICES, null=True)
     to_status = models.CharField(max_length=100, choices=STATUS_CHOICES)
     timestamp = models.DateTimeField(auto_now=True)
+
+
+@receiver(pre_save, sender=Task)
+def generateHistory(instance, **kwargs):
+    try:
+        task = Task.objects.get(pk=instance.id)
+    except:
+        task = None
+
+    if task is not None and task.status != instance.status:
+        TaskHistory.objects.create(
+            task=task,
+            from_status=task.status,
+            to_status=instance.status
+        )

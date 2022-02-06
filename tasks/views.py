@@ -45,15 +45,11 @@ class TaskEditView(LoginRequiredMixin):
 
     def form_valid(self, form):
         incoming_priority = form.cleaned_data.get("priority")
-        incoming_status = form.cleaned_data.get("status")
         cascadeUpdate(incoming_priority, self.request.user)
         self.object = form.save()
         self.object.user = self.request.user
         self.object.save()
 
-        current_task = Task.objects.get(id=self.object.id)
-        TaskHistory.objects.create(
-            to_status=incoming_status, task=current_task)
         return HttpResponseRedirect(self.get_success_url())
 
 
@@ -116,13 +112,9 @@ class UpdateTaskView(TaskEditView, UpdateView):
 
     def form_valid(self, form):
         incoming_priority = form.cleaned_data.get("priority")
-        incoming_status = form.cleaned_data.get("status")
         current_task = Task.objects.get(id=self.object.id)
         if incoming_priority != current_task.priority:
             cascadeUpdate(incoming_priority, self.request.user)
-        if incoming_status != current_task.status:
-            TaskHistory.objects.create(
-                from_status=current_task.status, to_status=incoming_status, task=current_task)
         self.object = form.save()
         self.object.user = self.request.user
         self.object.save()
@@ -189,19 +181,6 @@ class TaskApiViewset(ModelViewSet):
 
     def get_queryset(self):
         return Task.objects.filter(deleted=False, user=self.request.user)
-
-    def perform_update(self, serializer):
-        from_status, to_status = self.get_object(
-        ).status, serializer.validated_data["status"]
-        serializer.save()
-        if from_status != to_status:
-            TaskHistory.objects.create(
-                from_status=from_status, to_status=to_status, task=self.get_object())
-
-    def perform_create(self, serializer):
-        self.object = serializer.save(user=self.request.user)
-        status = self.object.status
-        TaskHistory.objects.create(to_status=status, task=self.object)
 
 
 class TaskHistorySerializer(ModelSerializer):
