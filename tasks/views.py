@@ -13,7 +13,8 @@ from django_filters.rest_framework import (BooleanFilter, CharFilter,
                                            ModelChoiceFilter)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.serializers import ModelSerializer
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import ModelViewSet, GenericViewSet
+from rest_framework import mixins
 
 from tasks.forms import (ScheduleReportForm, TaskForm, TaskUserCreationForm,
                          TaskUserLoginForm)
@@ -47,15 +48,11 @@ class TaskEditView(LoginRequiredMixin):
 
     def form_valid(self, form):
         incoming_priority = form.cleaned_data.get("priority")
-        incoming_status = form.cleaned_data.get("status")
         cascadeUpdate(incoming_priority, self.request.user)
         self.object = form.save()
         self.object.user = self.request.user
         self.object.save()
 
-        current_task = Task.objects.get(id=self.object.id)
-        TaskHistory.objects.create(
-            to_status=incoming_status, task=current_task)
         return HttpResponseRedirect(self.get_success_url())
 
 
@@ -121,13 +118,9 @@ class UpdateTaskView(TaskEditView, UpdateView):
 
     def form_valid(self, form):
         incoming_priority = form.cleaned_data.get("priority")
-        incoming_status = form.cleaned_data.get("status")
         current_task = Task.objects.get(id=self.object.id)
         if incoming_priority != current_task.priority:
             cascadeUpdate(incoming_priority, self.request.user)
-        if incoming_status != current_task.status:
-            TaskHistory.objects.create(
-                from_status=current_task.status, to_status=incoming_status, task=current_task)
         self.object = form.save()
         self.object.user = self.request.user
         self.object.save()
@@ -226,8 +219,8 @@ class TaskApiViewset(ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_class = TaskFilter
 
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+    def get_queryset(self):
+        return Task.objects.filter(deleted=False, user=self.request.user)
 
 
 class TaskHistorySerializer(ModelSerializer):
@@ -243,10 +236,17 @@ class TaskHistoryFilter(FilterSet):
     to_status = ChoiceFilter(choices=STATUS_CHOICES)
 
 
-class TaskHistoryApiViewset(ModelViewSet):
+class TaskHistoryApiViewset(mixins.DestroyModelMixin,
+                            mixins.RetrieveModelMixin,
+                            mixins.ListModelMixin,
+                            GenericViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = TaskHistorySerializer
-    queryset = TaskHistory.objects.all()
 
     filter_backends = [DjangoFilterBackend]
     filterset_class = TaskHistoryFilter
+
+    def get_queryset(self):
+        if "task_pk" in self.kwargs:
+            return TaskHistory.objects.filter(task=self.kwargs["task_pk"], task__user=self.request.user)
+        return TaskHistory.objects.filter(task__user=self.request.user)

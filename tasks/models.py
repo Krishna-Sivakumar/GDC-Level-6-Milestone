@@ -1,6 +1,9 @@
 from django.contrib.auth.models import User
 from django.db import models
 
+from django.dispatch import receiver
+from django.db.models.signals import post_save, pre_save
+
 
 STATUS_CHOICES = (
     ("PENDING", "PENDING"),
@@ -46,3 +49,18 @@ class Report(models.Model):
     time = models.TimeField(null=True)
     last_updated = models.DateTimeField(null=True)
     disabled = models.BooleanField(default=True)
+
+
+@receiver(pre_save, sender=Task)
+def generateHistory(instance, **kwargs):
+    try:
+        task = Task.objects.get(pk=instance.id)
+    except:
+        task = None
+
+    if task is not None and task.status != instance.status:
+        TaskHistory.objects.create(
+            task=task,
+            from_status=task.status,
+            to_status=instance.status
+        )
