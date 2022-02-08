@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta, timezone
+
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.models import User
 from django.contrib.auth.views import LoginView
@@ -14,8 +16,9 @@ from rest_framework.serializers import ModelSerializer
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework import mixins
 
-from tasks.forms import TaskForm, TaskUserCreationForm, TaskUserLoginForm
-from tasks.models import STATUS_CHOICES, Task, TaskHistory
+from tasks.forms import (ScheduleReportForm, TaskForm, TaskUserCreationForm,
+                         TaskUserLoginForm)
+from tasks.models import STATUS_CHOICES, Report, Task, TaskHistory
 
 
 @transaction.atomic
@@ -61,7 +64,8 @@ class CurrentTasksView(LoginRequiredMixin, ListView):
         context = super(CurrentTasksView, self).get_context_data(**kwargs)
         context.update({
             "total_count": Task.objects.filter(deleted=False, user=self.request.user).count(),
-            "completed_count": Task.objects.filter(deleted=False, completed=True, user=self.request.user).count()
+            "completed_count": Task.objects.filter(deleted=False, completed=True, user=self.request.user).count(),
+            "report_id": Report.objects.filter(user=self.request.user)[0].id,
         })
         return context
 
@@ -77,7 +81,8 @@ class CompletedTasksView(LoginRequiredMixin, ListView):
         context = super(CompletedTasksView, self).get_context_data(**kwargs)
         context.update({
             "total_count": Task.objects.filter(deleted=False, user=self.request.user).count(),
-            "completed_count": Task.objects.filter(deleted=False, completed=True, user=self.request.user).count()
+            "completed_count": Task.objects.filter(deleted=False, completed=True, user=self.request.user).count(),
+            "report_id": Report.objects.filter(user=self.request.user)[0].id,
         })
         return context
 
@@ -93,7 +98,8 @@ class AllTasksView(LoginRequiredMixin, ListView):
         context = super(AllTasksView, self).get_context_data(**kwargs)
         context.update({
             "total_count": Task.objects.filter(deleted=False, user=self.request.user).count(),
-            "completed_count": Task.objects.filter(deleted=False, completed=True, user=self.request.user).count()
+            "completed_count": Task.objects.filter(deleted=False, completed=True, user=self.request.user).count(),
+            "report_id": Report.objects.filter(user=self.request.user)[0].id,
         })
         return context
 
@@ -132,10 +138,44 @@ class DeleteTaskView(DeleteView):
         return HttpResponseRedirect(self.get_success_url())
 
 
+class ScheduleReportView(LoginRequiredMixin, UpdateView):
+    form_class = ScheduleReportForm
+    success_url = "/tasks"
+    template_name = "forms/report.html"
+
+    queryset = Report.objects.all()
+
+    def form_valid(self, form):
+        self.object = form.save()
+
+        # last_updated is set to the same day so that the next report is sent the following day
+
+        target = datetime.now().replace(hour=self.object.time.hour,
+                                        minute=self.object.time.minute, second=0).time()
+
+        self.object.last_updated = datetime.now(timezone.utc).replace(
+            hour=self.object.time.hour,
+            minute=self.object.time.minute,
+            second=0
+        ) - (
+            # last_updated is set to the day before if the current time hasn't passed the report time
+            timedelta(days=1) if target >= datetime.now().time()
+            else timedelta(days=0)
+        )
+
+        self.object.save()
+        return HttpResponseRedirect(self.get_success_url())
+
+
 class UserCreateView(UserPassesTestMixin, CreateView):
     form_class = TaskUserCreationForm
     template_name = "registration/signup.html"
     success_url = "/user/login"
+
+    def form_valid(self, form):
+        self.object = form.save()
+        Report.objects.create(user=self.object)
+        return HttpResponseRedirect(self.get_success_url())
 
     def test_func(self):
         return self.request.user.is_anonymous

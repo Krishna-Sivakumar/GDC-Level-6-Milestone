@@ -7,7 +7,7 @@
         {{field.errors}}
         {% if field.widget_type == 'checkbox' %}
             <label for="{{field.id_for_label}}">
-                {{field}} &nbsp; Completed
+                {{field}} &nbsp; {{field.label}}
             </label>
         {% else %}
             {{field.label_tag}}

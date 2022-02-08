@@ -44,7 +44,9 @@ new features to it.
 2. Ability to mark tasks as completed
 3. Ability to view completed tasks
 
-This milestone should be implemented with the Django ORM.
+The routes are not predefined, you can use any names for them.
+
+The background jobs must be executed with the help of celery workers, Bounty points for identifying and resolving potential edge-cases
 
 All views must be implemented using Django's Generic View classes.
 

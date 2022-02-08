@@ -1,0 +1,9 @@
+Hello {{name}}! 
+This is your daily status report:
+{% for key, value in status.items %}
+✺ {{key}}: {{value}} task(s)
+{% empty %}
+No tasks were created!
+{% endfor %}
+
+Get more things done tomorrow!
