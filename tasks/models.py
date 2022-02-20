@@ -29,9 +29,6 @@ class Task(models.Model):
         max_length=100, choices=STATUS_CHOICES, default=STATUS_CHOICES[0][0])
     priority = models.IntegerField(null=False)
 
-    def __str__(self):
-        return f"{self.title}: {self.priority} | {self.user}"
-
 
 class TaskHistory(models.Model):
     task = models.ForeignKey(
