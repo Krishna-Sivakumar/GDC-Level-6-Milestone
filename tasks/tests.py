@@ -1,9 +1,12 @@
+from datetime import datetime, timezone
 from json import loads
+from random import choice
 
 from django.contrib.auth.models import User
 from django.test import TestCase
 
 from tasks.models import STATUS_CHOICES, Task, TaskHistory
+from tasks.tasks import batch_email
 
 
 class ViewTests(TestCase):
@@ -240,34 +243,83 @@ class ViewTests(TestCase):
     def test_status_history_generation(self):
         self.test_authorization()
 
+        for task in Task.objects.all():
+            task.status = choice(STATUS_CHOICES)[0]
+            task.save()
+
         user = User.objects.first()
 
         self.login(user.username, self.password)
 
         task: Task = Task.objects.filter(
             user=user, deleted=False, completed=False).first()
-        self.assertEqual(task.status, STATUS_CHOICES[0][0])
 
-        self.update_task(pk=task.pk, status=STATUS_CHOICES[3][0])
+        from_status = task.status
+        to_status = choice(STATUS_CHOICES)[0]
+        while to_status == from_status:
+            to_status = choice(STATUS_CHOICES)[0]
 
-        task: Task = Task.objects.filter(
-            user=user, deleted=False, completed=False).first()
-        self.assertEqual(task.status, STATUS_CHOICES[3][0])
+        self.update_task(pk=task.pk, status=to_status)
 
         history_obj: TaskHistory = TaskHistory.objects.filter(
-            task=task).first()
-        self.assertEqual(history_obj.from_status, STATUS_CHOICES[0][0])
-        self.assertEqual(history_obj.to_status, STATUS_CHOICES[3][0])
+            task=task).last()
+        self.assertEqual(history_obj.from_status, from_status)
+        self.assertEqual(history_obj.to_status, to_status)
+
+        self.logout()
+
+    def test_redirect_away_from_login(self):
+        self.test_authentication()
+
+        user = User.objects.first()
+
+        self.login(user.username, self.password)
+
+        res = self.client.get("/user/login/")
+        self.assertEqual(res.status_code, 302)
+        self.assertEqual(res.url, "/tasks")
+
+        self.client.get("/user/signup/")
+        self.assertEqual(res.status_code, 302)
+        self.assertEqual(res.url, "/tasks")
 
         self.logout()
 
     def test_nested_history(self):
-        pass
+        self.test_status_history_generation()
+
+        TaskHistory.objects.all().update()
+
+        task_obj = TaskHistory.objects.first().task
+
+        user = task_obj.user
+
+        self.login(user.username, self.password)
+
+        history_objects = loads(
+            self.client.get(f"/api/task/{task_obj.pk}/history/").content
+        )
+
+        self.assertEqual(len(history_objects),
+                         TaskHistory.objects.filter(task=task_obj).count())
+
+        self.assertTrue(
+            all(
+                map(
+                    lambda history: history.get("task") == task_obj.pk,
+                    history_objects
+                )
+            )
+        )
+
+        self.logout()
 
     def test_report_form(self):
+        print(datetime.utcnow())
         pass
 
     def test_report_timing(self):
+        # batch_email()
         pass
 
     def test_deleting_user(self):
