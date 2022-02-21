@@ -240,7 +240,7 @@ class ViewTests(TestCase):
 
         self.logout()
 
-    def test_status_history_generation(self):
+    def test_history_generation(self):
         self.test_authorization()
 
         for task in Task.objects.all():
@@ -268,6 +268,24 @@ class ViewTests(TestCase):
 
         self.logout()
 
+    def test_history_authorization(self):
+        self.test_history_generation()
+        user = User.objects.first()
+
+        self.login(user.username, self.password)
+
+        self.assertTrue(
+            all(
+                map(
+                    lambda history: Task.objects.get(
+                        pk=history.get("task")).user == user,
+                    loads(self.client.get("/api/history/").content)
+                )
+            ), f"returned history objects do not belong to user \"{user.username}\"."
+        )
+
+        self.logout()
+
     def test_redirect_away_from_login(self):
         self.test_authentication()
 
@@ -286,7 +304,7 @@ class ViewTests(TestCase):
         self.logout()
 
     def test_nested_history(self):
-        self.test_status_history_generation()
+        self.test_history_generation()
 
         TaskHistory.objects.all().update()
 
