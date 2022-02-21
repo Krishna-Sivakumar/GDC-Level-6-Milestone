@@ -219,6 +219,10 @@ class TaskApiViewset(ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_class = TaskFilter
 
+    def perform_create(self, serializer):
+        serializer.validated_data["user"] = self.request.user
+        serializer.save()
+
     def get_queryset(self):
         return Task.objects.filter(deleted=False, user=self.request.user)
 

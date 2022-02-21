@@ -1,13 +1,17 @@
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
+
 from json import loads
 from random import choice
 from time import sleep
+from click import password_option
 
 from django.contrib.auth.models import User
 from django.test import TestCase
 
 from tasks.models import STATUS_CHOICES, Report, Task, TaskHistory
 from tasks.tasks import batch_email
+
+from rest_framework.test import APIClient
 
 
 class ViewTests(TestCase):
@@ -38,6 +42,16 @@ class ViewTests(TestCase):
             "status": STATUS_CHOICES[0][1],
             "priority": kwargs.get("priority") or 1,
         })
+
+    def add_task_API(self, **kwargs):
+        return self.client.post("/api/task/", {
+            "title": kwargs["title"],
+            "description": "Dummy description",
+            "completed": kwargs.get("completed") or False,
+            "deleted": kwargs.get("deleted") or False,
+            "status": STATUS_CHOICES[0][1],
+            "priority": kwargs.get("priority") or 1,
+        }, format="json")
 
     def update_task(self, **kwargs):
         task_obj: Task = Task.objects.get(pk=kwargs["pk"])
@@ -128,6 +142,52 @@ class ViewTests(TestCase):
             # </test>
 
             self.logout()
+
+    def test_adding_tasks_API(self):
+        self.test_authentication()
+        self.assertEqual(User.objects.all().count(), 3)
+        for user in User.objects.all():
+            self.login(user.username, self.password)
+
+            # <test>
+            for title in ["A", "B", "C"]:
+                response = self.add_task_API(title=title, user=user)
+
+            response = loads(self.client.get("/api/task/").content)
+
+            was_added = [
+                (title in map(lambda task: task.get("title"), response))
+                for title in ["A", "B", "C"]
+            ]
+
+            self.assertTrue(
+                all(was_added)
+            )
+
+            self.assertEqual(
+                set(
+                    map(lambda task: task.get("id"), response)
+                ),
+                set(
+                    map(
+                        lambda task: task.pk,
+                        Task.objects.filter(
+                            user=user,
+                            completed=False,
+                            deleted=False
+                        )
+                    )
+                )
+            )
+            # </test>
+
+            self.logout()
+
+    def test_completing_tasks_API(self):
+        pass
+
+    def test_deleting_tasks_API(self):
+        pass
 
     def test_completing_tasks(self):
         self.test_adding_tasks()
