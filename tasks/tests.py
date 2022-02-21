@@ -1,11 +1,12 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from json import loads
 from random import choice
+from time import sleep
 
 from django.contrib.auth.models import User
 from django.test import TestCase
 
-from tasks.models import STATUS_CHOICES, Task, TaskHistory
+from tasks.models import STATUS_CHOICES, Report, Task, TaskHistory
 from tasks.tasks import batch_email
 
 
@@ -333,12 +334,85 @@ class ViewTests(TestCase):
         self.logout()
 
     def test_report_form(self):
-        print(datetime.utcnow())
-        pass
+
+        self.test_adding_tasks()
+
+        user = User.objects.first()
+
+        self.login(user.username, self.password)
+
+        report = Report.objects.filter(user=user).first()
+
+        time_now = datetime.utcnow()
+
+        time_after = time_now + timedelta(minutes=2)
+        time_before = time_now - timedelta(minutes=1)
+
+        if time_now <= time_now.replace(hour=0, minute=1) or time_now >= time_now.replace(hour=23, minute=58):
+            raise Exception(
+                "This test will break now. Please wait for a few more minutes.")
+
+        # Setting the report to fire at a time before the current time
+
+        res = self.client.post(f"/user/report/{report.pk}/", {
+            "disabled": False,
+            "time": time_before.strftime("%H:%M")
+        })
+        self.assertEqual(res.status_code, 302)
+        self.assertEqual(res.url, "/tasks")
+
+        report: Report = Report.objects.filter(user=user).first()
+        self.assertEqual(
+            report.last_updated.day,
+            time_now.day,
+            msg="Report set before the current time should fire on the next day"
+        )
+
+        # Setting the report to fire at a time after the current time
+
+        res = self.client.post(f"/user/report/{report.pk}/", {
+            "disabled": False,
+            "time": time_after.strftime("%H:%M")
+        })
+        self.assertEqual(res.status_code, 302)
+        self.assertEqual(res.url, "/tasks")
+
+        report: Report = Report.objects.filter(user=user).first()
+        self.assertEqual(
+            report.last_updated.day,
+            (time_now - timedelta(days=1)).day,
+            msg="Report set after the current time should fire on the same day"
+        )
+
+        self.logout()
 
     def test_report_timing(self):
-        # batch_email()
-        pass
+        self.test_adding_tasks()
 
-    def test_deleting_user(self):
-        pass
+        user = User.objects.first()
+
+        self.login(user.username, self.password)
+
+        report = Report.objects.filter(user=user).first()
+
+        time_now = datetime.utcnow()
+
+        time_after = time_now + timedelta(minutes=1)
+
+        if time_now <= time_now.replace(hour=0, minute=1) or time_now >= time_now.replace(hour=23, minute=58):
+            raise Exception(
+                "This test will break now. Please wait for a few more minutes.")
+
+        res = self.client.post(f"/user/report/{report.pk}/", {
+            "disabled": False,
+            "time": time_after.strftime("%H:%M")
+        })
+        self.assertEqual(res.status_code, 302)
+        self.assertEqual(res.url, "/tasks")
+
+        sleep(61)
+        report_set = batch_email()
+        self.assertTrue(
+            report in report_set,
+            msg="Report wasn't queued at the correct time."
+        )

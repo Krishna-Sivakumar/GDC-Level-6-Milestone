@@ -47,3 +47,6 @@ def batch_email():
             report.last_updated = datetime.now(timezone.utc).replace(
                 hour=report.time.hour, second=report.time.second)
             report.save()
+
+    # for testing purposes
+    return report_set
