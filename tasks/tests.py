@@ -269,6 +269,24 @@ class ViewTests(TestCase):
 
         self.logout()
 
+    def test_task_api_authorization(self):
+        self.test_history_generation()
+        user = User.objects.first()
+
+        self.login(user.username, self.password)
+
+        self.assertTrue(
+            all(
+                map(
+                    lambda task: task.get("user").get(
+                        "username") == user.username,
+                    loads(self.client.get("/api/task/").content)
+                )
+            ), f"returned task objects do not belong to user \"{user.username}\""
+        )
+
+        self.logout()
+
     def test_history_authorization(self):
         self.test_history_generation()
         user = User.objects.first()
